@@ -9,6 +9,7 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 
 var mysql = require('mysql');
+
 var connection = mysql.createConnection({
   host : 'localhost',
   user : 'root',
@@ -19,58 +20,60 @@ var connection = mysql.createConnection({
 var app = express();
 
 // Database setup
-connection.query('CREATE DATABASE IF NOT EXISTS jariyo', function (err) {
-  if (err) throw err;
-  connection.query('USE jariyo', function (err) {
-    if (err) throw err;
-    connection.query('CREATE TABLE IF NOT EXISTS ParkingLot('
-            + 'parkinglot_id INT NOT NULL AUTO_INCREMENT,'
-            + 'parkinglot_name VARCHAR(50) NOT NULL,'
-            + 'total_floor INT NOT NULL default 0,'
-            + 'PRIMARY KEY(parkinglot_id)'
-            + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
+connection.query('CREATE DATABASE IF NOT EXISTS jariyo;'
+    + 'USE jariyo;'
+    +'CREATE TABLE IF NOT EXISTS ParkingLot('
+    + 'parkinglot_id INT NOT NULL AUTO_INCREMENT,'
+    + 'parkinglot_name VARCHAR(50) NOT NULL,'
+    + 'total_floor INT NOT NULL default 0,'
+    + 'PRIMARY KEY(parkinglot_id)'
+    + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
 
-            + 'CREATE TABLE IF NOT EXISTS ParkingFloor('
-            + 'floor_id INT NOT NULL AUTO_INCREMENT,'
-            + 'total_space INT NOT NULL default 0,'
-            + 'empty_space INT NOT NULL default 0,'
-            + 'parkinglot_id INT NOT NULL,'
-            + 'PRIMARY KEY(floor_id),'
-            + 'FOREIGN KEY(parkinglot_id) REFERENCES ParkingLot(parkinglot_id) ON UPDATE CASCADE ON DELETE CASCADE'
-            + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
+    + 'CREATE TABLE IF NOT EXISTS ParkingFloor('
+    + 'floor_id INT NOT NULL AUTO_INCREMENT,'
+    + 'total_space INT NOT NULL default 0,'
+    + 'empty_space INT NOT NULL default 0,'
+    + 'parkinglot_id INT NOT NULL,'
+    + 'PRIMARY KEY(floor_id),'
+    + 'FOREIGN KEY(parkinglot_id) REFERENCES ParkingLot(parkinglot_id) ON UPDATE CASCADE ON DELETE CASCADE'
+    + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
 
-            + 'CREATE TABLE IF NOT EXISTS Node('
-            + 'node_id INT NOT NULL AUTO_INCREMENT,'
-            + 'node_loc_x INT NOT NULL default 0,'
-            + 'node_loc_y INT NOT NULL default 0,'
-            + 'PRIMARY KEY(node_id)'
-            + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
+    + 'CREATE TABLE IF NOT EXISTS Node('
+    + 'node_id INT NOT NULL AUTO_INCREMENT,'
+    + 'node_loc_x INT NOT NULL default 0,'
+    + 'node_loc_y INT NOT NULL default 0,'
+    + 'parkinglot_id INT NOT NULL,'
+    + 'PRIMARY KEY(node_id),'
+    + 'FOREIGN KEY(parkinglot_id) REFERENCES ParkingLot(parkinglot_id) ON UPDATE CASCADE ON DELETE CASCADE'
+    + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
 
-            + 'CREATE TABLE IF NOT EXISTS Edge('
-            + 'edge_id INT NOT NULL AUTO_INCREMENT,'
-            + 'head_node_id INT NOT NULL,'
-            + 'tail_node_id INT NOT NULL,'
-            + 'total_empty_space INT NOT NULL default 0,'
-            + 'floor_id INT NOT NULL,'
-            + 'PRIMARY KEY(edge_id),'
-            + 'FOREIGN KEY(head_node_id) REFERENCES Node(node_id) ON UPDATE CASCADE ON DELETE CASCADE,'
-            + 'FOREIGN KEY(tail_node_id) REFERENCES Node(node_id) ON UPDATE CASCADE ON DELETE CASCADE,'
-            + 'FOREIGN KEY(floor_id) REFERENCES ParkingFloor(floor_id) ON UPDATE CASCADE ON DELETE CASCADE'
-            + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
+    + 'CREATE TABLE IF NOT EXISTS Edge('
+    + 'edge_id INT NOT NULL AUTO_INCREMENT,'
+    + 'head_node_id INT NOT NULL,'
+    + 'tail_node_id INT NOT NULL,'
+    + 'total_empty_space INT NOT NULL default 0,'
+    + 'floor_id INT NOT NULL,'
+    + 'parkinglot_id INT NOT NULL,'
+    + 'PRIMARY KEY(edge_id),'
+    + 'FOREIGN KEY(head_node_id) REFERENCES Node(node_id) ON UPDATE CASCADE ON DELETE CASCADE,'
+    + 'FOREIGN KEY(tail_node_id) REFERENCES Node(node_id) ON UPDATE CASCADE ON DELETE CASCADE,'
+    + 'FOREIGN KEY(floor_id) REFERENCES ParkingFloor(floor_id) ON UPDATE CASCADE ON DELETE CASCADE,'
+    + 'FOREIGN KEY(parkinglot_id) REFERENCES ParkingLot(parkinglot_id) ON UPDATE CASCADE ON DELETE CASCADE'
+    + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
 
-            + 'CREATE TABLE IF NOT EXISTS ParkingSpace('
-            + 'space_id INT NOT NULL AUTO_INCREMENT,'
-            + 'edge_id INT NOT NULL,'
-            + 'empty INT NOT NULL default 0,'
-            + 'space_loc_x INT NOT NULL default 0,'
-            + 'space_loc_y INT NOT NULL default 0,'
-            + 'PRIMARY KEY(space_id),'
-            + 'FOREIGN KEY(edge_id) REFERENCES Edge(edge_id) ON UPDATE CASCADE ON DELETE CASCADE'
-            + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
-            , function (err) {
-      if (err) throw err;
-    });
-  });
+    + 'CREATE TABLE IF NOT EXISTS ParkingSpace('
+    + 'space_id INT NOT NULL AUTO_INCREMENT,'
+    + 'edge_id INT NOT NULL,'
+    + 'empty INT NOT NULL default 0,'
+    + 'space_loc_x INT NOT NULL default 0,'
+    + 'space_loc_y INT NOT NULL default 0,'
+    + 'parkinglot_id INT NOT NULL,'
+    + 'PRIMARY KEY(space_id),'
+    + 'FOREIGN KEY(edge_id) REFERENCES Edge(edge_id) ON UPDATE CASCADE ON DELETE CASCADE,'
+    + 'FOREIGN KEY(parkinglot_id) REFERENCES ParkingLot(parkinglot_id) ON UPDATE CASCADE ON DELETE CASCADE'
+    + ') ENGINE=InnoDB DEFAULT CHARSET=utf8;'
+    , function (err) {
+        if (err) throw err;
 });
 
 // view engine setup
@@ -118,5 +121,12 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
+
+/*connection.query("select * from ParkingSpace", function(err, rows, cols) {
+    if(err) throw err;
+    console.log(rows);
+});*/
+
+connection.end();
 
 module.exports = app;
