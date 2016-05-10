@@ -11,8 +11,6 @@ var connection = mysql.createConnection({
     multipleStatements: true
 });
 
-connection.connect();
-
 function Graph(){
     this.isWeighted=false;
     this.nodes=[];
@@ -272,42 +270,44 @@ function dijkstra(graph,source_id){
     this.shortestPath.reverse();
 
 }
+// 노드_아이디
 
+exports.findPath = function(data, callback)
+{
+    connection.connect();
 
-var graph = new Graph();
-//var nodes = [];
+    var graph = new Graph();
 
-connection.query("USE jariyo;", function(err) {
-    if(err) throw err;
-});
+    connection.query("USE jariyo;", function(err) {
+        if(err) throw err;
+    });
 
 
 // 쿼리 만들 때 내가 속한 주차장과 층수도 받아와야 할 듯 하다!! -> 그거에 대한 조인도 필요할 듯
-connection.query("SELECT node_id FROM Node;", function(err, rows, cols) {
-    if(err) throw err;
-    for (var i=0; i<rows.length; i++) {
-        graph.addNode(rows[i].node_id);
-    }
+    connection.query("SELECT node_id FROM Node;", function(err, rows, cols) {
+        if(err) throw err;
+        for (var i=0; i<rows.length; i++) {
+            graph.addNode(rows[i].node_id);
+        }
+    });
+
+
+    connection.query("SELECT * FROM Edge;", function(err, rows, cols) {
+        if(err) throw err;
+        for (var i=0; i<rows.length; i++) {
+            var head_node = graph.findNode(rows[i].head_node_id);
+            var tail_node = graph.findNode(rows[i].tail_node_id);
+            head_node.addEdge(tail_node.name, rows[i].distance, rows[i].total_empty_space)
+        }
+        console.log('# source node id = ' + data.node_id);
+        var dijk = new dijkstra(graph, data.node_id);
+        callback(dijk.shortestPath);
+    });
+
+    connection.end();
+}
+
+
+exports.findPath({node_id: 8}, function(path) {
+    console.log(path);
 });
-
-
-connection.query("SELECT * FROM Edge;", function(err, rows, cols) {
-    if(err) throw err;
-    for (var i=0; i<rows.length; i++) {
-        var head_node = graph.findNode(rows[i].head_node_id);
-        var tail_node = graph.findNode(rows[i].tail_node_id);
-        head_node.addEdge(tail_node.name, rows[i].distance, rows[i].total_empty_space)
-    }
-    var source = 1;
-    console.log('# source node id = ' + source)
-    var dijk = new dijkstra(graph, source);;
-    console.log();
-    console.log('# Shortest Path');
-    console.log(dijk.shortestPath);
-    console.log();
-    console.log('# Empty Space');
-    console.log(dijk.emptySpace);
-});
-
-
-connection.end();
