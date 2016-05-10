@@ -307,7 +307,7 @@ exports.findPath = function(data, callback)
     connection.end();
 }
 
-
+//Test
 exports.findPath({node_id: 8}, function(path) {
     console.log(path);
 });
