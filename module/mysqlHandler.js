@@ -25,12 +25,12 @@ exports.updateSpaceState = function(data, callback)
 	params.push(data.spaceId);
 
 	pool.getConnection(function(err, connection) {
-		// Use the connection 
+		// Use the connection
 		connection.query(sql, params, function(err, rows) {
-			// And done with the connection. 
+			// And done with the connection.
 			connection.release();
 			callback(err, rows);
-			// Don't use the connection here, it has been returned to the pool. 
+			// Don't use the connection here, it has been returned to the pool.
 		});
 	});
 }
