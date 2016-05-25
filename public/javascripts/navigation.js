@@ -20,8 +20,8 @@ function Graph(){
     this.getAllNodes=getAllNodes;
     this.findNode=findNode;
 
-    function addNode(Name){
-        var temp = new Node(Name);
+    function addNode(Name, Loc_x, Loc_y, Exit, Entrance){
+        var temp = new Node(Name, Loc_x, Loc_y, Exit, Entrance);
         this.nodes.push(temp);
         return temp;
     }
@@ -65,8 +65,12 @@ function Graph(){
 
 }
 
-function Node(Name){
+function Node(Name, Loc_x, Loc_y, Exit, Entrance){
     this.name=Name;
+    this.loc_x=Loc_x;
+    this.loc_y=Loc_y;
+    this.exit=Exit;
+    this.entrance=Entrance;
     this.adjList=[];
     this.weight=[];
     this.emptySpace=[];
@@ -101,11 +105,9 @@ function Node(Name){
 function binaryHeap(){
     this.nodes=[];
 }
-
 binaryHeap.prototype.size=function(){
     return this.nodes.length;
 };
-
 binaryHeap.prototype.compare = function(node1,node2) {
     return node1.priority-node2.priority;
 };
@@ -113,7 +115,6 @@ binaryHeap.prototype.insert_push = function(element) {
     this.nodes.push(element);
     this.bubbleUp(this.nodes.length-1);
 };
-
 binaryHeap.prototype.remove_pop = function() {
     var ans=this.nodes[0];
     var last_element=this.nodes.pop();
@@ -124,7 +125,6 @@ binaryHeap.prototype.remove_pop = function() {
     }
     return ans;
 };
-
 binaryHeap.prototype.delete_node = function(node) {
     var length=this.nodes.length;
     isPresent=false;
@@ -140,11 +140,9 @@ binaryHeap.prototype.delete_node = function(node) {
     }
     return isPresent;
 };
-
 binaryHeap.prototype.top = function() {
     return this.nodes[0];
 };
-
 binaryHeap.prototype.sinkDown = function(i) {
     var length=this.nodes.length;
     while(true && i<length){
@@ -166,8 +164,6 @@ binaryHeap.prototype.sinkDown = function(i) {
         i=2*i+flag;
     }
 };
-
-
 binaryHeap.prototype.bubbleUp = function(i) {
 
     var length=this.nodes.length;
@@ -192,21 +188,16 @@ function MinPQ(list){
     bh=new binaryHeap();
     this.heap=bh;
 }
-
 MinPQ.prototype.push=function(node,priority){
     var temp=new MinPQNodes(node,priority);
     this.heap.insert_push(temp);
 };
-
 MinPQ.prototype.pop=function(){
     return this.heap.remove_pop().content;
 };
-
-
 MinPQ.prototype.remove=function(node){
     return this.heap.delete_node(node);
 };
-
 MinPQ.prototype.top=function(){
     return this.heap.top().content;
 };
@@ -219,6 +210,7 @@ function MinPQNodes(content,priority){
     this.priority=priority;
 }
 
+// source_id로부터 모든 node에 대하여 distance와 previousNode를 구한다
 function dijkstra(graph,source_id){
 
     this.previousNode=[];
@@ -226,18 +218,18 @@ function dijkstra(graph,source_id){
     this.shortestPath=[];
     var source = graph.findNode(source_id);
     this.distance[source.name]=0;
-    this.emptySpace;
     var pq=new MinPQ();
     var S = new MinPQ();
-    var nodes=graph.getAllNodes();
-    var length=nodes.length;
-    for(var i=0;i<length;i++){
-        if(nodes[i]!=source){
-            this.distance[nodes[i].name]=Number.POSITIVE_INFINITY;
+    this.nodes=graph.getAllNodes();
+    this.length=this.nodes.length;
+    for(var i=0;i<this.length;i++){
+        if(this.nodes[i]!=source){
+            this.distance[this.nodes[i].name]=Number.POSITIVE_INFINITY;
         }
-        pq.push(nodes[i],this.distance[nodes[i].name]);
+        pq.push(this.nodes[i],this.distance[this.nodes[i].name]);
     }
 
+    // source node로부터 가장 가까운 경로들을 구함
     while(pq.size()!=0){
         var u=pq.pop();
         S.push(u,this.distance[u.name]);
@@ -256,21 +248,203 @@ function dijkstra(graph,source_id){
         }
     }
 
+
+
+}
+
+function path_opt_0(graph, source_id){
+    var path = new dijkstra(graph, source_id);
+    var S = new MinPQ();
+    this.shortestPath=[];
+
+    // 거리가 가장 가까운 것
+    for(var i=0; i<path.length; i++){
+        S.push(path.nodes[i], path.distance[path.nodes[i].name]);
+    }
+    console.log(path.previousNode);
+    //console.log(graph.findNode(path.previousNode[u.name]));
+
+    // 가장 거리가 가까운 것부터 꺼내면서 빈자리가 있는 노드를 찾아냄
+    S.pop();
     var u = S.pop();
-    while(u==source || (this.emptySpace=graph.findNode(this.previousNode[u.name]).findEmptySpace(u.name)) == 0){
+    //console.log(u);
+    while(u==source_id || (graph.findNode(path.previousNode[u.name]).findEmptySpace(u.name)) == 0){
         u = S.pop();
     }
 
+    // destination node로부터 source node까지 경로를 shortestPath에 푸쉬함
     var tmp = u.name;
     while (tmp != source_id){
         this.shortestPath.push(tmp);
-        tmp = this.previousNode[tmp];
+        tmp = path.previousNode[tmp];
     }
     this.shortestPath.push(tmp);
-    this.shortestPath.reverse();
 
+    // 순서가 역순으로 되어 있으므로 reverse
+    this.shortestPath.reverse();
+    //console.log(this.shortestPath);
 }
-// 노드_아이디
+
+function path_opt_1(graph, source_id) {
+    var rev_graph = new Graph();
+    var path = new dijkstra(graph, source_id);
+    var R = new MinPQ();
+    var S = new MinPQ();
+    this.shortestPath=[];
+    var exit_node_id;
+
+    // 역방향 그래프에 노드 추가
+    for (var i=0; i<graph.nodes.length; i++){
+        rev_graph.addNode(graph.nodes[i].name, graph.nodes[i].loc_x, graph.nodes[i].loc_y, graph.nodes[i].exit_node, graph.nodes[i].entrance_node);
+        if (graph.nodes[i].exit == 1)
+            exit_node_id = graph.nodes[i].name;
+    }
+
+    // 역방향 그래프에 엣지 추가
+    for (var i=0; i<graph.nodes.length; i++){
+        for (var j=0; j<graph.nodes[i].adjList.length; j++){
+            //console.log(rev_graph.findNode(graph.nodes[i].adjList[j]));
+            //console.log(graph.nodes[i].name);
+            //console.log(graph.nodes[i].distance[j]);
+            rev_graph.findNode(graph.nodes[i].adjList[j]).addEdge(graph.nodes[i].name, graph.nodes[i].weight[j], graph.nodes[i].emptySpace[j]);
+        }
+    }
+
+    var rev_path = new dijkstra(rev_graph, exit_node_id);
+
+
+    // 거리가 가장 가까운 것
+    for(var i=0; i<rev_path.length; i++){
+        R.push(rev_path.nodes[i], rev_path.distance[rev_path.nodes[i].name]);
+    }
+    console.log(rev_path.previousNode);
+    //console.log(graph.findNode(path.previousNode[u.name]));
+
+    // 가장 거리가 가까운 것부터 꺼내면서 빈자리가 있는 노드를 찾아냄
+    R.pop();
+    var u = R.pop();
+    console.log(u);
+    while(u==source_id || (graph.findNode(rev_path.previousNode[u.name]).findEmptySpace(u.name)) == 0){
+        u = R.pop();
+    }
+
+    // 목적지 먼저 추가
+    this.shortestPath.push(rev_path.previousNode[u.name]);
+
+    // destination node로부터 soruce node까지 경로를 shortestPath에 푸쉬함
+    var tmp = u.name;
+    while (tmp != source_id){
+        this.shortestPath.push(tmp);
+        tmp = path.previousNode[tmp];
+    }
+    this.shortestPath.push(tmp);
+
+    // 순서가 역순으로 되어 있으므로 reverse
+    this.shortestPath.reverse();
+    //console.log(this.shortestPath);
+}
+
+function path_opt_2(graph, source_id){
+    var path = new dijkstra(graph, source_id);
+    var S = new MinPQ();
+    this.shortestPath=[];
+    var entrance_node_id=[];
+    var edgePQ = new MinPQ();
+    var flag;   // 0이면 가장가까운 노드 찾기
+                // 1이면 입구 노드 근처
+    var finish;
+
+    // 입구 노드 리스트 생성
+    for (var i=0; i<path.length; i++) {
+        if (graph.nodes[i].entrance == 1){
+            entrance_node_id.push(graph.nodes[i].name);
+        }
+    }
+
+    // 입구 노드를 포함한 엣지 MinPQ 생성
+    for (var i=0; i<path.length; i++){
+        for (var j=0; j<graph.nodes[i].emptySpace.length; j++){
+            var u = graph.nodes[i];
+            if (u.entrance == 1){
+                if (u.emptySpace[j] != 0) {
+                    edgePQ.push([u.name, u.adjList[j]], path.distance[u.name] + u.weight[j]);
+                }
+            }
+            else {
+                var v = graph.findNode(u.adjList[j]);
+                if (v.entrance == 1){
+                    if (u.emptySpace[j] != 0){
+                        edgePQ.push([u.name, v.name], path.distance[u.name] + u.weight[j]);
+                    }
+                }
+            }
+        }
+    }
+
+    // 가장 거리가 가까운 것부터 꺼내면서 빈자리가 있는 노드를 찾아냄
+    var e = edgePQ.pop();
+
+    var uu;
+    if (e === undefined) {
+        // 가장 거리가 가까운 것부터 꺼내면서 빈자리가 있는 노드를 찾아냄
+        S.pop();
+        uu = S.pop();
+        console.log(u);
+        while(uu==source_id || (graph.findNode(path.previousNode[uu.name]).findEmptySpace(uu.name)) == 0){
+            uu = S.pop();
+        }
+    }
+    else {
+        uu = graph.findNode(e[0]);
+        this.shortestPath.push(e[1]);
+    }
+
+    // destination node로부터 source node까지 경로를 shortestPath에 푸쉬함
+    var tmp = uu.name;
+    while (tmp != source_id){
+        this.shortestPath.push(tmp);
+        tmp = path.previousNode[tmp];
+    }
+    this.shortestPath.push(tmp);
+
+    // 순서가 역순으로 되어 있으므로 reverse
+    this.shortestPath.reverse();
+    //console.log(this.shortestPath);
+}
+
+function path_opt_3(graph, source_id){
+    var path = new dijkstra(graph, source_id);
+    var S = new MinPQ();
+    this.shortestPath=[];
+    var e;
+    var maxSpace = 0;
+
+    // 빈자리가 가장 많은 엣지 찾기
+    for (var i=0; i<graph.nodes.length; i++) {
+        for (var j = 0; j < graph.nodes[i].adjList.length; j++) {
+            if (graph.nodes[i].weight[j] > maxSpace) {
+                maxSpace = graph.nodes[i].weight[j];
+                e = [graph.nodes[i].name, graph.nodes[i].adjList[j]];
+            }
+        }
+    }
+
+    this.shortestPath.push(e[1]);
+
+    // destination node로부터 source node까지 경로를 shortestPath에 푸쉬함
+    var tmp = e[0];
+    console.log(e);
+    while (tmp != source_id){
+        this.shortestPath.push(tmp);
+        tmp = path.previousNode[tmp];
+    }
+    this.shortestPath.push(tmp);
+
+    // 순서가 역순으로 되어 있으므로 reverse
+    this.shortestPath.reverse();
+    //console.log(this.shortestPath);
+}
+
 
 exports.findPath = function(data, callback)
 {
@@ -283,11 +457,10 @@ exports.findPath = function(data, callback)
     });
 
 
-// 쿼리 만들 때 내가 속한 주차장과 층수도 받아와야 할 듯 하다!! -> 그거에 대한 조인도 필요할 듯
-    connection.query("SELECT node_id FROM Node;", function(err, rows, cols) {
+    connection.query("SELECT * FROM Node;", function(err, rows, cols) {
         if(err) throw err;
         for (var i=0; i<rows.length; i++) {
-            graph.addNode(rows[i].node_id);
+            graph.addNode(rows[i].node_id, rows[i].node_loc_x, rows[i].node_loc_y, rows[i].exit_node, rows[i].entrance_node);
         }
     });
 
@@ -299,15 +472,30 @@ exports.findPath = function(data, callback)
             var tail_node = graph.findNode(rows[i].tail_node_id);
             head_node.addEdge(tail_node.name, rows[i].distance, rows[i].total_empty_space)
         }
+        //console.log(graph);
         console.log('# source node id = ' + data.node_id);
-        var dijk = new dijkstra(graph, data.node_id);
+        console.log('  option = ' + data.option);
+        var dijk;
+        if (data.option == 0){
+            dijk = new path_opt_0(graph, data.node_id);
+        }
+        else if (data.option == 1){
+            dijk = new path_opt_1(graph, data.node_id);
+        }
+        else if (data.option == 2){
+            dijk = new path_opt_2(graph, data.node_id);
+        }
+        else {
+            dijk = new path_opt_3(graph, data.node_id);
+        }
+
         callback(dijk.shortestPath);
     });
 
     connection.end();
 }
 
-//Test
-exports.findPath({node_id: 8}, function(path) {
+
+exports.findPath({node_id: 3, option: 2}, function(path) {
     console.log(path);
 });
