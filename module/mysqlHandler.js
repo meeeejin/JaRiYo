@@ -11,7 +11,7 @@ var pool  = mysql.createPool({
 //exports = {} like an object
 exports.updateSpaceState = function(data, callback)
 {
-	console.log(data);
+	//console.log(data);
 	//parameter check
 	if(data.spaceId == undefined || data.isEmpty == undefined)
 	{
@@ -37,4 +37,4 @@ exports.updateSpaceState = function(data, callback)
 
 //{node_id:10} data.node_id
 //test code
-exports.updateSpaceState({spaceId:10, isEmpty: 0}, function(err, res){console.log(err, res)})
+//exports.updateSpaceState({spaceId:10, isEmpty: 0}, function(err, res){console.log(err, res)})

@@ -8,7 +8,7 @@ var connection = mysql.createConnection({
     host : 'localhost',
     user : 'root',
     password : 'qwer1234',
-    multipleStatements: true
+    database: 'jariyo'
 });
 
 function Graph(){
@@ -274,7 +274,13 @@ function dijkstra(graph,source_id){
 
 exports.findPath = function(data, callback)
 {
-    connection.connect();
+    connection.connect(function(err) {
+        if (err) {
+            console.error('mysql connection error');
+            console.error(err);
+            throw err;
+        }
+    });
 
     var graph = new Graph();
 
