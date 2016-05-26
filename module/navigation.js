@@ -2,14 +2,7 @@
  * Created by hayun on 2016. 5. 8..
  */
 
-var mysql = require('mysql');
-
-var connection = mysql.createConnection({
-    host : 'localhost',
-    user : 'root',
-    password : 'qwer1234',
-    database: 'jariyo'
-});
+var mysqlHandler = require("./mysqlHandler");
 
 function Graph(){
     this.isWeighted=false;
@@ -448,7 +441,50 @@ function path_opt_3(graph, source_id){
 
 exports.findPath = function(data, callback)
 {
-    connection.connect(function(err) {
+    mysqlHandler.getAllNode(function(err, nodes){
+        if(err)
+           callback(err);
+        else
+        {
+            mysqlHandler.getAllEdge(function(err, edges){
+                if(err)
+                    callback(err);
+                else
+                {
+                    var graph = new Graph();
+                    for (var i=0; i<nodes.length; i++) {
+                        graph.addNode(nodes[i].node_id, nodes[i].node_loc_x, nodes[i].node_loc_y, nodes[i].exit_node, nodes[i].entrance_node);
+                    }
+
+                    for (var i=0; i<edges.length; i++) {
+                        var head_node = graph.findNode(edges[i].head_node_id);
+                        var tail_node = graph.findNode(edges[i].tail_node_id);
+                        head_node.addEdge(tail_node.name, edges[i].distance, edges[i].total_empty_space)
+                    }
+                    //console.log(graph);
+                    console.log('# source node id = ' + data.node_id);
+                    console.log('  option = ' + data.option);
+                    var dijk;
+                    if (data.option == 0){
+                        dijk = new path_opt_0(graph, data.node_id);
+                    }
+                    else if (data.option == 1){
+                        dijk = new path_opt_1(graph, data.node_id);
+                    }
+                    else if (data.option == 2){
+                        dijk = new path_opt_2(graph, data.node_id);
+                    }
+                    else {
+                        dijk = new path_opt_3(graph, data.node_id);
+                    }
+
+                    callback(err, dijk.shortestPath);
+                }
+            })
+        }
+    });
+
+    /*connection.connect(function(err) {
         if (err) {
             console.error('mysql connection error');
             console.error(err);
@@ -498,10 +534,11 @@ exports.findPath = function(data, callback)
         callback(dijk.shortestPath);
     });
 
-    connection.end();
+    connection.end();*/
 }
 
 
-exports.findPath({node_id: 3, option: 2}, function(path) {
+/*
+exports.findPath({node_id: 3, option: 2}, function(err, path) {
     console.log(path);
-});
+});*/

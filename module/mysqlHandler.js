@@ -34,7 +34,24 @@ exports.updateSpaceState = function(data, callback)
 		});
 	});
 }
-
+exports.getAllNode = function(callback)
+{
+	var sql = 'SELECT * FROM Node;';
+	pool.getConnection(function(err, connection) {
+		connection.query(sql, function (err, rows) {
+			callback(err, rows);
+		});
+	});
+}
+exports.getAllEdge = function(callback)
+{
+	var sql = 'SELECT * FROM Edge;';
+	pool.getConnection(function(err, connection) {
+		connection.query(sql, function (err, rows) {
+			callback(err, rows);
+		});
+	});
+}
 //{node_id:10} data.node_id
 //test code
 //exports.updateSpaceState({spaceId:10, isEmpty: 0}, function(err, res){console.log(err, res)})

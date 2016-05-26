@@ -7,7 +7,7 @@
 var express = require('express');
 var router = express.Router();
 var mysqlHandler = require('../module/mysqlHandler');
-var navigationHandler = require('../public/javascripts/navigation');
+var navigationHandler = require('../module/navigation');
 
 /*POST home page.*/
 //req.body={spaceID, isEmpty}
@@ -26,6 +26,7 @@ router.post('/led_lamp', function(req, res, next){ //{spaceId: 10, isEmpty: 0}
 			res.json({error:1});
 		}
 		else res.json({error:0});
+		console.log(result);
 	});
 });
 //led_lamp Fin.
@@ -39,15 +40,13 @@ router.post('/navi', function(req, res, next){
 	}
 	console.log(req.body);
 	navigationHandler.findPath(req.body, function (error, result) {
-		console.log("In the navigationHandler function!!!!!!!!!!!!");
 		if(error)
 		{
-			console.log("Error occurred!!!!!!!!!!!!!!!!!!!!");
 			console.log(error);
-			res.json(1);
+			res.json({error: 1});
 		}
-		else res.json(result);
-		console.log("After IFELSE not occured!!!!!!!!!!!!!!!!!!!");
+		else res.json({error:0, result: result});
+		console.log({result: result});
 	});
 });
 module.exports = router;
